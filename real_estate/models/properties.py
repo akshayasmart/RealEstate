@@ -1,11 +1,20 @@
 from odoo import _,models ,fields,api
 from datetime import timedelta
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError,ValidationError
 
 
 
 class Properties(models.Model):
     _name = 'estate.properties'
+
+    # selling price cannot be lower than 90% of the expected price.
+    @api.constrains('expected_price', 'selling_price')
+    def check_selling_price(self):
+        for record in self:
+            if record.selling_price > 0 and record.selling_price < 0.9 * record.expected_price:
+                raise ValidationError("Selling price cannot be lower than 90% of expected price!")
+
+    # added tags
     @api.model
     def _get_default_user(self):
         return self.env.context.get('user_id', self.env.user.id)
@@ -14,11 +23,15 @@ class Properties(models.Model):
     def _get_default_buyer(self):
         return self.env.context.get('buyer_id', self.env.user.id)
 
+    # Add the total_area field It is defined as the sum of the living_area and the garden_area.
+
     @api.depends('living_area', 'garden_area')
     def total_area(self):
         for rec in self:
             rec.total = 0
             rec.total = rec.living_area + rec.garden_area
+
+    # add the price amount which amount is grater the amount will add in the best price field
 
     @api.depends('offer_ids.price')
     def _compute_best_price(self):
@@ -28,6 +41,8 @@ class Properties(models.Model):
                 if child_record.price > rec.best_offer:
                     best_offer = child_record.price
             rec.best_offer = best_offer
+
+    # Amounts should be positive
 
     @api.constrains('expected_price')
     def constrains_expected_price(self):
@@ -61,6 +76,8 @@ class Properties(models.Model):
         else:
             self.status = 'sold'
 
+    # Once an offer is accepted, the selling price and the buyer should be set:
+
     def accept_button(self):
         for record in self:
             for rec in record.offer_ids:
@@ -68,8 +85,10 @@ class Properties(models.Model):
                 if rec.status == 'accepted':
                     self.write({
                         'selling_price': rec.price,
-                        'buyer_id': rec.partner_id.id
-                })
+                        'buyer_id': rec.partner_id.id,
+                        'status_bar': 'offer_accepted'
+
+                    })
 
     def refused_button(self):
         for record in self:
@@ -78,13 +97,25 @@ class Properties(models.Model):
                 if rec.status == 'refused':
                     self.write({
                         'selling_price': 0,
-                        'buyer_id' : [('buyer_id', '=', '')]
+                        'buyer_id' : [('buyer_id', '=', '')],
+                        'status_bar' : 'offer_received'
                 })
+
+    def action_set_sold(self,vals):
+        if 'status_bar' in vals:
+           vals['status_bar'] = 'sold'
+
 
 
     name = fields.Char(string='Title')
     tag_ids = fields.Many2many('estate.property.tag',string='Tags')
     properties_type_id = fields.Many2one('estate.property.type',string='Properties Type')
+    status_bar = fields.Selection([
+        ('new', 'NEW'),
+        ('offer_received', 'OFFER RECEIVED'),(
+            'offer_accepted','OFFER ACCEPTED'),
+        ('sold','SOLD') ],
+        'Status Bar', default='new')
     post_code = fields.Char(string='Post Code')
     expected_price = fields.Float(string='Expected Price')
     available_from = fields.Date(string='Available From')
@@ -97,6 +128,7 @@ class Properties(models.Model):
     garage = fields.Boolean(string='Garage')
     garden = fields.Boolean(string='Garden')
     garden_area = fields.Integer(stringt='Garden Area(sqm)')
+    sequence = fields.Integer('Sequence', default=1, help="Used to order stages. Lower is better.")
     garden_orientation = fields.Selection([
         ('north', 'North'),
         ('south', 'South'),
@@ -117,6 +149,8 @@ class Properties(models.Model):
 class Offer(models.Model):
     _name = 'estate.property.offer'
 
+# the validity date should be computed and can be updated:
+
     @api.depends('validity')
     def _compute_validity_date(self):
         for rec in self:
@@ -130,19 +164,15 @@ class Offer(models.Model):
     def onchange_validity_days(self):
         self.deadline = fields.Date.today() + timedelta(days=self.validity)
 
+    # click the buttons ‘Accept’ and ‘Refuse’ the status will change
+
     # def accept_offer(self):
     #     for rec in self:
     #         rec.status = 'accepted'
-    #
+
     # def refused_offer(self):
     #     for rec in self:
     #         rec.status = 'refused'
-
-    @api.constrains('selling_price', 'expected_price')
-    def constrains_price(self):
-        for rec in self:
-            if rec.selling_price < rec.expected_price * 0.9:
-                raise UserError(_(' The selling price cannot be lower than 90% of the expected price.'))
 
     properties_id = fields.Many2one('estate.properties',string='Offers')
     price = fields.Float(string='Price')

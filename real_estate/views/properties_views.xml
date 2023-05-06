@@ -8,8 +8,11 @@
             <field name="model">estate.properties</field>
             <field name="arch" type="xml">
                 <form string="Properties">
-                    <button name="action_cancel" string="Cancel" type="object" class="text-info"/>
-                    <button name="action_sold" string="Sold" type="object" class="text-info"/>
+                    <header>
+                        <field name="status_bar" widget="statusbar" options="{'clickable': '1'}"/>
+                        <button name="action_cancel" string="Cancel" type="object" class="text-info"/>
+                        <button name="action_sold" string="Sold" type="object" class="text-info"/>
+                    </header>
                     <sheet>
                         <h1>
                             <field class="text-break" name="name" default_focus="1" placeholder="e.g. Lumber Inc"/>
@@ -88,10 +91,12 @@
                     <field name="name"/>
                     <field name="properties_type_id"/>
                     <field name="post_code"/>
+                    <field name="tag_ids" widget='many2many_tags' options="{'color_field': 'color'}"/>
                     <field name="available_from"/>
                     <field name="expected_price"/>
                     <field name="best_offer"/>
-                    <field name="selling_price"/>
+                    <field name="selling_price" optional="show"/>
+                    <field name="sequence" widget="handle"/>
                 </tree>
             </field>
         </record>
