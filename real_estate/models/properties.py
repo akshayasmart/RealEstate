@@ -166,13 +166,13 @@ class Offer(models.Model):
 
     # click the buttons ‘Accept’ and ‘Refuse’ the status will change
 
-    # def accept_offer(self):
-    #     for rec in self:
-    #         rec.status = 'accepted'
+    def accept_offer(self):
+        for rec in self:
+            rec.status = 'accepted'
 
-    # def refused_offer(self):
-    #     for rec in self:
-    #         rec.status = 'refused'
+    def refused_offer(self):
+        for rec in self:
+            rec.status = 'refused'
 
     properties_id = fields.Many2one('estate.properties',string='Offers')
     price = fields.Float(string='Price')
@@ -182,6 +182,7 @@ class Offer(models.Model):
         ('accepted','Accepted')],string='Status'
         )
     deadline = fields.Date(string='Deadline',compute='_compute_validity_date', inverse='_set_deadline', store=True)
+
 
 
 

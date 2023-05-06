@@ -4,6 +4,16 @@ from odoo import models,fields
 class PropertiesTypes(models.Model):
     _name = 'estate.property.type'
 
+    def action_property_type(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Offers',
+            'res_model': 'estate.properties',
+            'view_mode': 'tree','form'
+            'context': "{'create': False}"
+        }
+
+
     name = fields.Char(string='Name')
 
     _sql_constraints = [

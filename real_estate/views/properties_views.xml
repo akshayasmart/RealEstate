@@ -53,16 +53,17 @@
                             <page string="Offers">
                                 <group>
                                     <field name="offer_ids">
-                                        <tree editable="bottom">
+                                        <tree editable="bottom" decoration-success="status=='accepted'"
+                                              decoration-danger="status=='refused'">
                                             <field name="properties_id"/>
                                             <field name="price"/>
                                             <field name="partner_id"/>
                                             <field name="validity"/>
                                             <field name="deadline"/>
-<!--                                            <button name="accept_offer" type="object" class="oe_start_button"-->
-<!--                                                    icon="fa-check"/>-->
-<!--                                            <button name="refused_offer" type="object" class="oe_start_button"-->
-<!--                                                    icon="fa-times"/>-->
+                                            <button name="accept_offer" type="object" class="oe_start_button"
+                                                    icon="fa-check"/>
+                                            <button name="refused_offer" type="object" class="oe_start_button"
+                                                    icon="fa-times"/>
                                             <field name="status"/>
                                         </tree>
                                     </field>
@@ -82,12 +83,28 @@
             </field>
         </record>
 
+        <!--Search-->
+        <record id="view_properties_search" model="ir.ui.view">
+            <field name="name">estate.properties.search</field>
+            <field name="model">estate.properties</field>
+            <field name="arch" type="xml">
+                <search string="Properties">
+                    <field name="status_bar" string="Status Bar"/>
+                    <field name="living_area" string="Living Area" filter_domain="[('living_area','>=', self)]"/>
+                    <separator/>
+                    <filter string="Available" name="status_bar" domain="[('status_bar','=','offer_accepted')]"/>
+                </search>
+            </field>
+        </record>
+
+
         <!--Tree Views-->
         <record id="view_estate_properties_tree" model="ir.ui.view">
             <field name="name">estate.properties.tree</field>
             <field name="model">estate.properties</field>
             <field name="arch" type="xml">
-                <tree string="Properties">
+                <tree string="Properties" decoration-success="status_bar=='offer_accepted' or 'offer_received'"
+                      decoration-muted="status=='sold'" decoration-bf="status_bar=='offer_accepted'">
                     <field name="name"/>
                     <field name="properties_type_id"/>
                     <field name="post_code"/>
@@ -96,6 +113,8 @@
                     <field name="expected_price"/>
                     <field name="best_offer"/>
                     <field name="selling_price" optional="show"/>
+                    <field name="status_bar" optional="show"/>
+                    <field name="status" optional="show"/>
                     <field name="sequence" widget="handle"/>
                 </tree>
             </field>
