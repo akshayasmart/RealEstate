@@ -9,11 +9,10 @@
                 <form string="Properties Types">
                     <sheet>
                         <div name="button_box" class="oe_button_box">
-                            <button name="action_property_type" type="object" class="oe_start_button"
-                                    icon="fa-shopping-basket">
-                                <div classs="o_start_info">
-                                    <span class="o_start_text">Offers</span>
-                                </div>
+                            <button name="action_property_type" string="Offers" type="object" class="oe_start_button"
+                                    icon="fa-money">
+                                <field name="offer_count"/>
+
                             </button>
                         </div>
                         <group>

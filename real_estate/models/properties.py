@@ -75,7 +75,9 @@ class Properties(models.Model):
             raise UserError('A canceled property cannot be set as sold.')
         else:
             self.status = 'sold'
-
+            self.write({
+                'status_bar':'sold'
+            })
     # Once an offer is accepted, the selling price and the buyer should be set:
 
     def accept_button(self):
@@ -97,15 +99,9 @@ class Properties(models.Model):
                 if rec.status == 'refused':
                     self.write({
                         'selling_price': 0,
-                        'buyer_id' : [('buyer_id', '=', '')],
-                        'status_bar' : 'offer_received'
+                        'buyer_id': [('buyer_id', '=', '')],
+                        'status_bar': 'offer_received'
                 })
-
-    def action_set_sold(self,vals):
-        if 'status_bar' in vals:
-           vals['status_bar'] = 'sold'
-
-
 
     name = fields.Char(string='Title')
     tag_ids = fields.Many2many('estate.property.tag',string='Tags')
@@ -182,7 +178,4 @@ class Offer(models.Model):
         ('accepted','Accepted')],string='Status'
         )
     deadline = fields.Date(string='Deadline',compute='_compute_validity_date', inverse='_set_deadline', store=True)
-
-
-
-
+    property_type_id = fields.Many2one(related='properties_id.properties_type_id',string='Property Type')
