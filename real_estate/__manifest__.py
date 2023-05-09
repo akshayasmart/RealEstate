@@ -9,6 +9,7 @@
         'views/properties_views.xml',
         'views/properties_types_views.xml',
         'views/properties_tags_views.xml',
+        'views/propertiesmoveline_views.xml',
 
     ],
     'installable': True,

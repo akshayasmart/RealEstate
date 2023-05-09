@@ -11,7 +11,7 @@ class PropertiesTypes(models.Model):
             'res_model': 'estate.property.offer',
             'domain': "[('property_type_id', '=', active_id)]",
             'view_mode': 'tree','form'
-            'context': "{'create': False}",
+                                'context': "{'create': False}",
         }
 
     @api.depends('offer_ids')
@@ -34,7 +34,6 @@ class EstateType(models.Model):
 
     property_type_id = fields.Many2one('estate.property.type',string='Property Type')
     property_id = fields.Many2one('estate.properties',string='Properties', domain="[('properties_type_id', '=', property_type_id)]")
-    title = fields.Char(string='Title')
     status = fields.Selection([('new', 'New'),
                                ('cancel', 'Canceled'),
                                ('sold', 'Sold')

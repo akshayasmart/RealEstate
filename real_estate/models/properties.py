@@ -14,6 +14,12 @@ class Properties(models.Model):
             if record.selling_price > 0 and record.selling_price < 0.9 * record.expected_price:
                 raise ValidationError("Selling price cannot be lower than 90% of expected price!")
 
+    def unlink(self):
+        for record in self:
+            if record.status not in ('new', 'canceled'):
+                raise ValidationError("Error: This property cannot be deleted.")
+        return super(Properties, self).unlink()
+
     # added tags
     @api.model
     def _get_default_user(self):
@@ -35,12 +41,11 @@ class Properties(models.Model):
 
     @api.depends('offer_ids.price')
     def _compute_best_price(self):
-        for rec in self:
-            best_offer = 0
-            for child_record in rec.offer_ids:
-                if child_record.price > rec.best_offer:
-                    best_offer = child_record.price
-            rec.best_offer = best_offer
+        for property in self:
+            best_offer = 0.0
+            for offer in property.offer_ids:
+                best_offer = max(best_offer, offer.price)
+            property.best_offer = best_offer
 
     # Amounts should be positive
 
@@ -48,7 +53,7 @@ class Properties(models.Model):
     def constrains_expected_price(self):
         for rec in self:
             if rec.expected_price < 0:
-                    raise UserError(_(' The the unexpected Price must be strictly Positive'))
+                raise UserError(_(' The the unexpected Price must be strictly Positive'))
 
 
     # garden will set a default area of 10 and an orientation to North.
@@ -101,7 +106,7 @@ class Properties(models.Model):
                         'selling_price': 0,
                         'buyer_id': [('buyer_id', '=', '')],
                         'status_bar': 'offer_received'
-                })
+                    })
 
     name = fields.Char(string='Title')
     tag_ids = fields.Many2many('estate.property.tag',string='Tags')
@@ -132,20 +137,21 @@ class Properties(models.Model):
         ('west', 'West')
     ], string='Garden Orientation')
     status = fields.Selection([('new', 'New'),
-        ('cancel', 'Canceled'),
-        ('sold', 'Sold')
-    ], string='Status',default='new', readonly=True)
+                               ('cancel', 'Canceled'),
+                               ('sold', 'Sold')
+                               ], string='Status',default='new', readonly=True)
 
     total= fields.Integer(string='Total Area(sqm)' , compute='total_area')
     offer_ids = fields.One2many('estate.property.offer','properties_id',string='Properties')
     color = fields.Integer('Color Index', default=0)
     user_id = fields.Many2one('res.users',string='Salesman',default=_get_default_user)
     buyer_id = fields.Many2one('res.partner',string='Buyer',default=_get_default_buyer)
+    invoice_id = fields.Many2one('account.move', string='Invoice', readonly=True, copy=False)
 
 class Offer(models.Model):
     _name = 'estate.property.offer'
 
-# the validity date should be computed and can be updated:
+    # the validity date should be computed and can be updated:
 
     @api.depends('validity')
     def _compute_validity_date(self):
@@ -170,12 +176,31 @@ class Offer(models.Model):
         for rec in self:
             rec.status = 'refused'
 
+    @api.model
+    def create(self, vals):
+        # create the offer record
+        offer = super(Offer, self).create(vals)
+        # update the property state to 'Offer Received'
+        property_id = vals.get('properties_id')
+        if property_id:
+            property = self.env['estate.properties'].browse(property_id)
+            property.write({'status_bar': 'offer_received'})
+        return offer
+
+    @api.constrains('price', 'properties_id')
+    def check_offer_price(self):
+        for record in self:
+            existing_offers = self.search([('properties_id', '=', record.properties_id.id), ('id', '!=', record.id)])
+            for offer in existing_offers:
+                if record.price < offer.price:
+                    raise ValidationError('Cannot create offer with price lower than existing offer!')
+
     properties_id = fields.Many2one('estate.properties',string='Offers')
     price = fields.Float(string='Price')
     partner_id = fields.Many2one('res.partner',string='Partner')
     validity = fields.Integer(string='validity(days)')
     status = fields.Selection([('refused','Refused'),
-        ('accepted','Accepted')],string='Status'
-        )
+                               ('accepted','Accepted')],string='Status'
+                              )
     deadline = fields.Date(string='Deadline',compute='_compute_validity_date', inverse='_set_deadline', store=True)
     property_type_id = fields.Many2one(related='properties_id.properties_type_id',string='Property Type')

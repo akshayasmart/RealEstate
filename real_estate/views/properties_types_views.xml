@@ -12,7 +12,6 @@
                             <button name="action_property_type" string="Offers" type="object" class="oe_start_button"
                                     icon="fa-money">
                                 <field name="offer_count"/>
-
                             </button>
                         </div>
                         <group>
