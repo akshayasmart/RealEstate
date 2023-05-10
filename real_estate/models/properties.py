@@ -1,7 +1,7 @@
-from odoo import _,models ,fields,api
 from datetime import timedelta
-from odoo.exceptions import UserError,ValidationError
 
+from odoo import _, models, fields, api
+from odoo.exceptions import UserError, ValidationError
 
 
 class Properties(models.Model):
@@ -83,30 +83,7 @@ class Properties(models.Model):
             self.write({
                 'status_bar':'sold'
             })
-    # Once an offer is accepted, the selling price and the buyer should be set:
 
-    def accept_button(self):
-        for record in self:
-            for rec in record.offer_ids:
-                rec.status = 'accepted'
-                if rec.status == 'accepted':
-                    self.write({
-                        'selling_price': rec.price,
-                        'buyer_id': rec.partner_id.id,
-                        'status_bar': 'offer_accepted'
-
-                    })
-
-    def refused_button(self):
-        for record in self:
-            for rec in record.offer_ids:
-                rec.status = 'refused'
-                if rec.status == 'refused':
-                    self.write({
-                        'selling_price': 0,
-                        'buyer_id': [('buyer_id', '=', '')],
-                        'status_bar': 'offer_received'
-                    })
 
     name = fields.Char(string='Title')
     tag_ids = fields.Many2many('estate.property.tag',string='Tags')
@@ -166,15 +143,31 @@ class Offer(models.Model):
     def onchange_validity_days(self):
         self.deadline = fields.Date.today() + timedelta(days=self.validity)
 
+    # Once an offer is accepted, the selling price and the buyer should be set:
+
+    def accept_button(self):
+        for record in self:
+            for rec in record.properties_id:
+                self.status = 'accepted'
+                if self.status == 'accepted':
+                    rec.write({
+                        'selling_price': self.price,
+                        'buyer_id': self.partner_id.id,
+                        'status_bar': 'offer_accepted',
+                    })
+
+    def refused_button(self):
+        for record in self:
+            for rec in record.properties_id:
+                self.status = 'refused'
+                if self.status == 'refused':
+                    rec.write({
+                        'selling_price': 0,
+                        'buyer_id': [('buyer_id', '=', '')],
+                        'status_bar': 'offer_received'
+                    })
+
     # click the buttons ‘Accept’ and ‘Refuse’ the status will change
-
-    def accept_offer(self):
-        for rec in self:
-            rec.status = 'accepted'
-
-    def refused_offer(self):
-        for rec in self:
-            rec.status = 'refused'
 
     @api.model
     def create(self, vals):

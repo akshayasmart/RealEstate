@@ -24,10 +24,6 @@
                                 <field name="properties_type_id"/>
                                 <field name="post_code"/>
                                 <field name="available_from"/>
-                                <button name="accept_button" type="object" class="oe_start_button"
-                                        icon="fa-check"/>
-                                <button name="refused_button" type="object" class="oe_start_button"
-                                        icon="fa-times"/>
                             </group>
                             <group>
                                 <field name="expected_price"/>
@@ -60,9 +56,10 @@
                                             <field name="partner_id"/>
                                             <field name="validity"/>
                                             <field name="deadline"/>
-                                            <button name="accept_offer" type="object" class="oe_start_button"
-                                                    icon="fa-check"/>
-                                            <button name="refused_offer" type="object" class="oe_start_button"
+                                            <button name="accept_button" type="object" class="oe_start_button"
+                                                    icon="fa-check"  invisible="context.get('hide_button', False)">
+                                            </button>
+                                            <button name="refused_button" type="object" class="oe_start_button"
                                                     icon="fa-times"/>
                                             <field name="status"/>
                                         </tree>
@@ -124,20 +121,20 @@
                                     </strong>
                                     <div>
                                         <span class="o_kanban_record_subtitle">
+                                            Expected Price:
                                             <field name="expected_price"/>
                                         </span>
                                     </div>
-                                    <div>
+                                    <div attrs="{'invisible':[('status_bar','!=','offer_received')]}">
                                         <span class="o_kanban_record_subtitle">
-
-                                            <field name="best_offer"
-                                                   attrs="{'invisible':[('status_bar','!=','offer_received')]}"/>
+                                            Best Price:
+                                            <field name="best_offer"/>
                                         </span>
                                     </div>
-                                    <div>
+                                    <div attrs="{'invisible':[('status_bar','!=','offer_accepted')]}">
                                         <span class="o_kanban_record_subtitle">
-                                            <field name="selling_price"
-                                                   attrs="{'invisible':[('status_bar','!=','offer_accepted')]}"/>
+                                            Selling Price:
+                                            <field name="selling_price"/>
                                         </span>
                                     </div>
                                     <div>
